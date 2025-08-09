@@ -9,13 +9,14 @@ interface Props {
 }
 
 const emotionMap: Record<string, { opposite: string; file: string }> = {
-  happy: { opposite: "sad", file: "/assets/sad.mp3" },
-  sad: { opposite: "happy", file: "/assets/happy.mp3" },
-  angry: { opposite: "calm", file: "/assets/calm.mp3" },
-  surprised: { opposite: "relaxed", file: "/assets/relaxed.mp3" },
-  neutral: { opposite: "energetic", file: "/assets/energetic.mp3" },
-  fearful: { opposite: "confident", file: "/assets/confident.mp3" },
-  disgusted: { opposite: "pleasant", file: "/assets/pleasant.mp3" },
+  happy: { opposite: "sad", file: "/assets/Sad.mp3" },
+  sad: { opposite: "happy", file: "/assets/Happy.mp3" },
+  angry: { opposite: "calm", file: "/assets/Energetic.mp3" },
+  surprised: { opposite: "relaxed", file: "/assets/Romantic.mp3" },
+  neutral: { opposite: "energetic", file: "/assets/Energetic.mp3" },
+  fearful: { opposite: "confident", file: "/assets/Happy.mp3" },
+  disgusted: { opposite: "pleasant", file: "/assets/Romantic.mp3" },
+  sexy: { opposite: "romantic", file: "/assets/Romantic.mp3" },
 };
 
 export default function FaceDetection({ onEmotionDetected }: Props) {
@@ -56,7 +57,11 @@ export default function FaceDetection({ onEmotionDetected }: Props) {
         const sorted = Object.entries(detections.expressions).sort(
           (a, b) => b[1] - a[1]
         );
-        const topEmotion = sorted[0][0] as keyof typeof emotionMap;
+        let topEmotion = sorted[0][0] as keyof typeof emotionMap;
+
+        if (topEmotion === 'happy') {
+          topEmotion = 'sexy';
+        }
 
         if (emotionMap[topEmotion]) {
           const opposite = emotionMap[topEmotion].opposite;
