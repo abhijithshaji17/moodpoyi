@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import * as faceapi from "face-api.js";
 import { Howl } from "howler";
 
@@ -23,6 +23,14 @@ export default function FaceDetection({ onEmotionDetected }: Props) {
   const currentSound = useRef<Howl | null>(null);
 
   useEffect(() => {
+    const startVideo = () => {
+      navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      });
+    };
+
     const loadModels = async () => {
       const MODEL_URL = "/models";
       await Promise.all([
@@ -35,15 +43,7 @@ export default function FaceDetection({ onEmotionDetected }: Props) {
     loadModels();
   }, []);
 
-  const startVideo = () => {
-    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    });
-  };
-
-  const detectEmotion = async () => {
+  const detectEmotion = useCallback(async () => {
     if (videoRef.current) {
       const detections = await faceapi
         .detectSingleFace(
@@ -78,12 +78,14 @@ export default function FaceDetection({ onEmotionDetected }: Props) {
         }
       }
     }
-  };
+  }, [onEmotionDetected]);
 
   useEffect(() => {
     const interval = setInterval(detectEmotion, 3000); // every 3s
     return () => clearInterval(interval);
-  }, []);
+  }, [detectEmotion]);
+
+  
 
   return (
     <div className="relative">

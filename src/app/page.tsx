@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import dynamic from "next/dynamic";
+
 import { motion } from "framer-motion";
 import AnimatedText from "@/components/AnimatedText";
 import FaceDetection from "@/components/FaceDetection";

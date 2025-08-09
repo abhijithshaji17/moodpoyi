@@ -3,9 +3,10 @@
 import React, { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Sphere, OrbitControls } from "@react-three/drei";
+import { Mesh } from "three";
 
 function FloatingSphere({ color }: { color: string }) {
-  const mesh = useRef<any>(null);
+  const mesh = useRef<Mesh>(null!);
   useFrame(({ clock }) => {
     mesh.current.rotation.y = clock.getElapsedTime() * 0.3;
   });
