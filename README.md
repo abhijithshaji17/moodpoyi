@@ -58,7 +58,7 @@ npm run dev
 # 📄 Project Documentation
 ## Screenshots  📸 
 ![Homepage](https://github.com/abhijithshaji17/moodpoyi/blob/main/public/images1.png?raw=true)
-*The auto facecapture and emotion begins*
+*The auto facecapture and emotion mapping begins*
 
 ![Musicplay](https://github.com/abhijithshaji17/moodpoyi/blob/main/public/images2.png?raw=true)
 *Mood specified and opposite music selection played*
