@@ -1,27 +1,44 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useImperativeHandle,
+} from "react";
 import * as faceapi from "face-api.js";
 import { Howl } from "howler";
 
 interface Props {
   onEmotionDetected: (emotion: string, song: string) => void;
+  musicStopped: boolean;
 }
 
 const emotionMap: Record<string, { opposite: string; file: string }> = {
-  happy: { opposite: "sad", file: "/assets/Sad.mp3" },
-  sad: { opposite: "happy", file: "/assets/Happy.mp3" },
-  angry: { opposite: "calm", file: "/assets/Energetic.mp3" },
-  surprised: { opposite: "relaxed", file: "/assets/Romantic.mp3" },
-  neutral: { opposite: "energetic", file: "/assets/Energetic.mp3" },
-  fearful: { opposite: "confident", file: "/assets/Happy.mp3" },
-  disgusted: { opposite: "pleasant", file: "/assets/Romantic.mp3" },
-  sexy: { opposite: "romantic", file: "/assets/Romantic.mp3" },
+  happy: { opposite: "sad", file: "/assets/songs/Sad.mp3" },
+  sad: { opposite: "happy", file: "/assets/songs/Happy.mp3" },
+  angry: { opposite: "calm", file: "/assets/songs/Energetic.mp3" },
+  surprised: { opposite: "relaxed", file: "/assets/songs/Romantic.mp3" },
+  neutral: { opposite: "energetic", file: "/assets/songs/Energetic.mp3" },
+  fearful: { opposite: "confident", file: "/assets/songs/Happy.mp3" },
+  disgusted: { opposite: "pleasant", file: "/assets/songs/Romantic.mp3" },
+  sexy: { opposite: "romantic", file: "/assets/songs/Romantic.mp3" },
 };
 
-export default function FaceDetection({ onEmotionDetected }: Props) {
+const FaceDetection = React.forwardRef(function FaceDetection(
+  { onEmotionDetected, musicStopped }: Props,
+  ref
+) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const currentSound = useRef<Howl | null>(null);
+  const lastPlayTime = useRef<number>(0);
+
+  useImperativeHandle(ref, () => ({
+    stopMusic: () => {
+      if (currentSound.current) {
+        currentSound.current.stop();
+      }
+    },
+  }));
 
   useEffect(() => {
     const loadModels = async () => {
@@ -44,7 +61,7 @@ export default function FaceDetection({ onEmotionDetected }: Props) {
     });
   };
 
-  const detectEmotion = async () => {
+  const detectEmotion = React.useCallback(async () => {
     if (videoRef.current) {
       const detections = await faceapi
         .detectSingleFace(
@@ -59,36 +76,39 @@ export default function FaceDetection({ onEmotionDetected }: Props) {
         );
         let topEmotion = sorted[0][0] as keyof typeof emotionMap;
 
-        if (topEmotion === 'happy') {
-          topEmotion = 'sexy';
+        if (topEmotion === "happy") {
+          topEmotion = "happy";
         }
 
         if (emotionMap[topEmotion]) {
           const opposite = emotionMap[topEmotion].opposite;
           const songFile = emotionMap[topEmotion].file;
 
-          // Stop current song
-          if (currentSound.current) {
-            currentSound.current.stop();
+          // Only play new song if not stopped and 5s have passed since last play
+          const now = Date.now();
+          if (!musicStopped && now - lastPlayTime.current > 5000) {
+            // Stop current song
+            if (currentSound.current) {
+              currentSound.current.stop();
+            }
+            currentSound.current = new Howl({
+              src: [songFile],
+              html5: true,
+            });
+            currentSound.current.play();
+            lastPlayTime.current = now;
           }
-
-          // Play new song
-          currentSound.current = new Howl({
-            src: [songFile],
-            html5: true,
-          });
-          currentSound.current.play();
 
           onEmotionDetected(topEmotion, `${opposite} (${songFile})`);
         }
       }
     }
-  };
+  }, [onEmotionDetected, musicStopped]);
 
   useEffect(() => {
     const interval = setInterval(detectEmotion, 3000); // every 3s
     return () => clearInterval(interval);
-  }, []);
+  }, [detectEmotion]);
 
   return (
     <div className="relative">
@@ -103,4 +123,6 @@ export default function FaceDetection({ onEmotionDetected }: Props) {
       />
     </div>
   );
-}
+});
+
+export default FaceDetection;

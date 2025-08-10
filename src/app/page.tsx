@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import AnimatedText from "@/components/AnimatedText";
 import FaceDetection from "@/components/FaceDetection";
-import Visualizer from "@/components/Visualizer";
 import WelcomeMessage from "@/components/WelcomeMessage";
 
 const emotionColors: Record<string, string> = {
@@ -16,7 +15,6 @@ const emotionColors: Record<string, string> = {
   neutral: "#808080", // Gray
   fearful: "#FF4500", // OrangeRed
   disgusted: "#008000", // Green
-  sexy: "#FF69B4", // HotPink
 };
 
 const emotionEmojis: Record<string, string> = {
@@ -27,19 +25,40 @@ const emotionEmojis: Record<string, string> = {
   neutral: "😐",
   fearful: "😨",
   disgusted: "🤢",
-  sexy: "😏",
 };
 
 export default function HomePage() {
+  // State hooks
   const [emotion, setEmotion] = useState<string | null>(null);
   const [song, setSong] = useState<string | null>(null);
+  const [musicStopped, setMusicStopped] = useState(false);
+  // Ref for FaceDetection controls
+  const faceDetectionRef = useRef<{ stopMusic: () => void }>(null);
+
+  // Handler for emotion detection callback
+  const handleEmotionDetected = (emo: string, songName: string) => {
+    setEmotion(emo);
+    setSong(songName);
+  };
+
+  const handleStopMusic = () => {
+    setMusicStopped(true);
+    faceDetectionRef.current?.stopMusic();
+  };
+
+  const handleResumeMusic = () => {
+    setMusicStopped(false);
+  };
 
   return (
     <motion.main
       className="relative flex flex-col items-center justify-center min-h-screen text-white overflow-hidden"
-      animate={{ backgroundColor: emotion ? emotionColors[emotion] : "#000000" }}
+      animate={{
+        backgroundColor: emotion ? emotionColors[emotion] : "#000000",
+      }}
       transition={{ duration: 2, ease: "easeInOut" }}
     >
+      {/* Top-right navigation button */}
       <div className="absolute top-4 right-4">
         <Link href="/how-it-works">
           <motion.button
@@ -54,24 +73,43 @@ export default function HomePage() {
 
       {/* 3D Background */}
       <div className="absolute inset-0 -z-10">
-        <Visualizer emotion={emotion} />
+        <div className="bg-gradient-to-b from-gray-900 to-gray-800 transform -skew-y-6 -skew-x-6"></div>
       </div>
 
-      {/* Title */}
+      {/* Title / Welcome message */}
       <WelcomeMessage />
 
       {/* Webcam + Emotion Detection */}
+
       <FaceDetection
-        onEmotionDetected={(emo, songName) => {
-          setEmotion(emo);
-          setSong(songName);
-        }}
+        ref={faceDetectionRef}
+        onEmotionDetected={handleEmotionDetected}
+        musicStopped={musicStopped}
       />
 
-      {/* Detected Emotion */}
+      {/* Stop/Resume Music Buttons */}
+      {musicStopped ? (
+        <button
+          className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition-colors"
+          onClick={handleResumeMusic}
+        >
+          Resume Music
+        </button>
+      ) : (
+        <button
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition-colors"
+          onClick={handleStopMusic}
+        >
+          Stop Music
+        </button>
+      )}
+
+      {/* Detected Emotion Display */}
       {emotion && (
         <div className="mt-6 text-center">
-          <AnimatedText text={`You look ${emotion} ${emotionEmojis[emotion]}`} />
+          <AnimatedText
+            text={`You look ${emotion} ${emotionEmojis[emotion]}`}
+          />
           {song && <AnimatedText text={`Playing: ${song}`} />}
         </div>
       )}
